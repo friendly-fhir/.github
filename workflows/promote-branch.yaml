@@ -1,0 +1,87 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Promote branch
+on:
+  workflow_call:
+    inputs:
+      source-ref:
+        type: string
+        description: Source reference to promote to the branch
+        default: ${{github.ref}}
+        required: false
+      branch:
+        type: string
+        description: The branch to update
+        default: ${{github.event.repository.default_branch}}
+        required: false
+      environment:
+        type: string
+        description: Name of the environment to promote to
+        default: ${{github.event.repository.default_branch}}-branch
+        required: false
+      token:
+        type: string
+        description: Authentication token to use for pushing
+        default: ${{github.token}}
+        required: false
+
+# Allow only 1 promotion to occur at any given time, to prevent the possibility
+# of multiple changes running at the same time and going in out-of-order.
+concurrency:
+  group: promote-${{inputs.branch}}
+  cancel-in-progress: true
+
+permissions:
+  # ID Token needed for permissions for promotion
+  id-token: write
+
+jobs:
+  promote:
+    name: Promote to ${{inputs.branch}}
+    runs-on: ubuntu-latest
+    if: success()
+
+    environment:
+      name: ${{inputs.environment}}
+      url: ${{github.server_url}}/${{github.repository}}/tree/${{inputs.branch}}
+
+    steps:
+      - name: Checkout develop
+        uses: actions/checkout@v4
+        with:
+          token: ${{ inputs.token }}
+          fetch-depth: 0
+
+      - name: Push
+        id: update-branch
+        run: |
+          echo "new_sha1=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+
+          git fetch origin ${{inputs.branch}}
+          git checkout ${{inputs.branch}}
+          echo "old_sha1=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+
+          git push origin ${{github.sha}}:${{inputs.branch}}
+
+      - name: Summarize Success
+        if: success()
+        run: |
+          sha1=$(git rev-parse --short HEAD)
+          echo '# ⏩ Accepted changes from `${{inputs.source-ref}}` into `${{inputs.branch}}`'  >> "${GITHUB_STEP_SUMMARY}"
+          echo '' >> "${GITHUB_STEP_SUMMARY}"
+          echo '[${{github.sha}}](${{github.server_url}}/${{github.repository}}/commit/${{github.sha}})' >> "${GITHUB_STEP_SUMMARY}"
+          echo ' is the new HEAD of `${{inputs.branch}}`' >> "${GITHUB_STEP_SUMMARY}"
+          echo ''                                 >> "${GITHUB_STEP_SUMMARY}"
+          echo '## Summary'                       >> "${GITHUB_STEP_SUMMARY}"
+          echo ''                                 >> "${GITHUB_STEP_SUMMARY}"
+          echo 'Below are commits being promoted' >> "${GITHUB_STEP_SUMMARY}"
+          echo ''                                 >> "${GITHUB_STEP_SUMMARY}"
+
+          old_sha1=${{steps.update-branch.outputs.old_sha1}}
+          new_sha1=${{steps.update-branch.outputs.new_sha1}}
+          url_base=${{github.server_url}}/${{github.repository}}/commit/
+          echo "| SHA1 | Message |" >> "${GITHUB_STEP_SUMMARY}"
+          echo "|------|---------|" >> "${GITHUB_STEP_SUMMARY}"
+          git log                                                              \
+            --pretty='format:| [`%h`](${{github.server_url}}/${{github.repository}}/commit/%h) | %s |' \
+            --no-show-signature                                                \
+            ${old_sha1}..${new_sha1} >> "${GITHUB_STEP_SUMMARY}"
