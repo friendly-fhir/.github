@@ -35,8 +35,8 @@ runs:
       run: |
         file="${{runner.temp}}/${{inputs.license-file-name}}"
         if [[ -z '${{inputs.template-file}}' ]]; then
-          go-licenses report ${{inputs.path}} > "${file}"
+          go-licenses report ${{inputs.packages}} > "${file}"
         else
-          go-licenses report ${{inputs.path}} --template ${{inputs.template-file}} > "${file}"
+          go-licenses report ${{inputs.packages}} --template ${{inputs.template-file}} > "${file}"
         fi
         echo "output-file=${file}" >> "${GITHUB_OUTPUT}"

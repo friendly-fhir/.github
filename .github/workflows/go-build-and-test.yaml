@@ -83,7 +83,7 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
-      - name: Download dependencies
+      - name: Generate
         run: go generate ${{ inputs.packages }}
 
       - name: Build
@@ -95,13 +95,13 @@ jobs:
         id: test
         shell: bash
         run: |
-          file=${{ runner.temp }}/${{ matrix.os }}-coverage.out
+          file="$(cd '${{ runner.temp }}'; pwd)/${{ matrix.os }}-coverage.out"
+          echo "coverage-file=${file}" >> "${GITHUB_OUTPUT}"
           if ${{ inputs.short-test }}; then
             go test -short -v -coverprofile "${file}" ${{ inputs.packages }}
           else
             go test -v -coverprofile "${file}" ${{ inputs.packages }}
           fi
-          echo "coverage-file=${file}" >> "${GITHUB_OUTPUT}"
 
       - name: Upload Coverage
         uses: actions/upload-artifact@v4

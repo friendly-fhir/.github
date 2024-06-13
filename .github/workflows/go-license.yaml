@@ -4,6 +4,13 @@ name: Generate Go License Manifest
 on:
   workflow_call:
     inputs:
+      go-version-file:
+        type: string
+        description: |
+          The path to the go version file.
+          Default: go.mod
+        default: go.mod
+        required: false
       packages:
         type: string
         description: |
@@ -62,6 +69,11 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ${{inputs.go-version-file}}
 
       - name: Set up licenses
         uses: friendly-fhir/.github/actions/golang/setup-go-licenses@master
