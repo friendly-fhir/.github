@@ -1,0 +1,17 @@
+name: Set up the go-licenses tool
+description: A simple action for setting up the go-licenses tool in a runner
+
+inputs:
+  version:
+    description: |
+      The version to use for the go-licenss tool.
+      Default: latest
+    default: latest
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Install go-licenses
+      shell: bash
+      run: go install github.com/google/go-licenses@${{inputs.version}}

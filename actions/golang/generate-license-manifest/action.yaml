@@ -1,0 +1,41 @@
+name: Generate License Manifest
+description: Generates a license manifest for the project
+
+inputs:
+  packages:
+    description: |
+      The go package-path to use for the go-licenses tool.
+      Default: "./..."
+    default: ./...
+    required: false
+  license-file-name:
+    description: |
+      The name of the output file.
+      Default: licenses.csv
+    default: licenses.csv
+    required: false
+  template-file:
+    description: |
+      The path to a template file. If not specified, the output is in CSV format.
+    default: ""
+    required: false
+
+outputs:
+  output-file:
+    description: The path to the generated license manifest
+    value: ${{steps.manifest.outputs.output-file}}
+
+runs:
+  using: composite
+  steps:
+    - name: Generate License Manifest
+      shell: bash
+      id: manifest
+      run: |
+        file="${{runner.temp}}/${{inputs.license-file-name}}"
+        if [[ -z '${{inputs.template-file}}' ]]; then
+          go-licenses report ${{inputs.path}} > "${file}"
+        else
+          go-licenses report ${{inputs.path}} --template ${{inputs.template-file}} > "${file}"
+        fi
+        echo "output-file=${file}" >> "${GITHUB_OUTPUT}"

@@ -1,0 +1,86 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Generate Go License Manifest
+
+on:
+  workflow_call:
+    inputs:
+      packages:
+        type: string
+        description: |
+          The go package-path to use for the go-licenses tool.
+          Default: ./...
+        default: "./..."
+        required: false
+      go-licenses-version:
+        type: string
+        description: |
+          The version to use for the go-licenses tool.
+          Default: latest.
+        default: latest
+        required: false
+      license-file-name:
+        type: string
+        description: |
+          The name of the license file to output.
+          Default: licenses.csv.
+        default: licenses.csv
+        required: false
+      template-file:
+        type: string
+        description: |
+          The path to a template file to use for generating templated output.
+          If empty, defaults to a CSV license format.
+        default: ""
+        required: false
+      artifact-name:
+        type: string
+        description: |
+          The name to use for the generated artifact. This may be used by
+          downstream workflows to reference the artifact.
+          Default: license-manifest
+        default: license-manifest
+        required: false
+    outputs:
+      artifact-name:
+        description: The name of the uploaded coverage
+        value: ${{inputs.artifact-name}}
+      artifact-id:
+        description: The artifact ID of the uploaded coverage
+        value: ${{jobs.license.outputs.artifact-id}}
+      artifact-url:
+        description: The URL of the uploaded coverage
+        value: ${{jobs.license.outputs.artifact-url}}
+
+jobs:
+  license:
+    name: License
+    runs-on: ubuntu-latest
+    outputs:
+      artifact-id: ${{steps.upload.outputs.artifact-id}}
+      artifact-url: ${{steps.upload.outputs.artifact-url}}
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up licenses
+        uses: ./actions/golang/setup-go-licenses
+        with:
+          version: "${{inputs.go-licenses-version}}"
+
+      - name: Check Licenses
+        uses: ./actions/golang/generate-license-manifest
+        id: manifest
+        with:
+          packages: "${{inputs.packages}}"
+          license-file-name: "${{inputs.license-file-name}}"
+          template-file: "${{inputs.template-file}}"
+
+      - name: Upload License Manifest
+        if: success() && inputs.artifact-name != ''
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{inputs.artifact-name}}
+          path: ${{steps.manifest.outputs.output-file}}
+
