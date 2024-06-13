@@ -89,7 +89,7 @@ jobs:
           go-version-file: ${{inputs.go-version-file}}
 
       - name: Setup CyloneDX-Gomod
-        uses: ./actions/golang/setup-cyclonedx-gomod
+        uses: friendly-fhir/.github/actions/golang/setup-cyclonedx-gomod@master
         with:
           version: latest
 

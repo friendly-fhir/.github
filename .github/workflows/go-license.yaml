@@ -64,12 +64,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up licenses
-        uses: ./actions/golang/setup-go-licenses
+        uses: friendly-fhir/.github/actions/golang/setup-go-licenses@master
         with:
           version: "${{inputs.go-licenses-version}}"
 
       - name: Check Licenses
-        uses: ./actions/golang/generate-license-manifest
+        uses: friendly-fhir/.github/actions/golang/generate-license-manifest@master
         id: manifest
         with:
           packages: "${{inputs.packages}}"

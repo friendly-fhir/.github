@@ -93,6 +93,7 @@ jobs:
 
       - name: Run tests
         id: test
+        shell: bash
         run: |
           file=${{ runner.temp }}/${{ matrix.os }}-coverage.out
           if ${{ inputs.short-test }}; then
