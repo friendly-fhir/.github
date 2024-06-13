@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-action.json
 name: Set up govulncheck tool
 description: A simple action for setting up the govulncheck tool in a runner
 

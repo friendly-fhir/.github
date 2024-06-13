@@ -1,0 +1,35 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Lint Markdown
+
+on:
+  workflow_call:
+    inputs:
+      globs:
+        type: string
+        description: |
+          A list of globs to use for markdownlint-cli2.
+          Default: **/*.md
+        default: |
+          **/*.md
+        required: false
+      config:
+        type: string
+        description: |
+          The path to the markdownlint-cli2 configuration file.
+          Default: .markdownlint-cli2.yaml
+        default: .markdownlint-cli2.yaml
+        required: false
+
+jobs:
+  lint:
+    name: Lint Documentation
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+
+    - uses: DavidAnson/markdownlint-cli2-action@v16
+      with:
+        globs: ${{inputs.globs}}
+        config: ${{inputs.config}}

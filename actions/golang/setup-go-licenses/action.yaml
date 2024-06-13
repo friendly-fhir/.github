@@ -1,10 +1,11 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-action.json
 name: Set up the go-licenses tool
-description: A simple action for setting up the go-licenses tool in a runner
+description: A simple action for setting up the cyclonedx-gomod tool in a runner
 
 inputs:
   version:
     description: |
-      The version to use for the go-licenss tool.
+      The version to use for the cyclonedx-gomod tool.
       Default: latest
     default: latest
     required: false
@@ -12,6 +13,6 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Install go-licenses
+    - name: Install cyclonedx-gomod
       shell: bash
-      run: go install github.com/google/go-licenses@${{inputs.version}}
+      run: go install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@${{inputs.version}}

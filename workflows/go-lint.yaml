@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Lint Go
+
+on:
+  workflow_call:
+    inputs:
+      go-version-file:
+        type: string
+        description: |
+          The path to the go version file.
+          Default: go.mod
+        default: go.mod
+        required: false
+      golangci-lint-version:
+        type: string
+        description: |
+          The version to use for the golangci-lint tool.
+          Default: v1.58
+        default: v1.58
+        required: false
+
+jobs:
+  lint:
+    name: Lint Go
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+
+    - name: Set up Go 1.21
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: ${{inputs.go-version-file}}
+
+    - name: Download dependencies
+      run: go mod download
+
+    - name: golangci-lint
+      uses: golangci/golangci-lint-action@v6
+      with:
+        version: ${{inputs.golangci-lint-version}}

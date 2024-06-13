@@ -1,0 +1,43 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Code Scanning
+
+on:
+  workflow_call:
+    inputs:
+      go-version-file:
+        type: string
+        description: |
+          The path to the go version file.
+          Default: go.mod
+        default: go.mod
+        required: false
+
+permissions:
+  # for github/codeql-action/init to get workflow details
+  actions: read
+
+  # for github/codeql-action/analyze to upload SARIF results
+  security-events: write
+
+jobs:
+  build:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ${{inputs.go-version-file}}
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: go
+          queries: security-and-quality
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
