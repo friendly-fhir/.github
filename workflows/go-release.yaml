@@ -69,6 +69,8 @@ jobs:
   release:
     name: Release ${{ github.ref_name }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     outputs:
       jobs: ${{ steps.create-jobs.outputs.jobs }}
       project-name: ${{ steps.metadata.outputs.project-name }}
@@ -157,6 +159,9 @@ jobs:
     strategy:
       matrix:
         job: ${{ fromJson(needs.release.outputs.jobs) }}
+    permissions:
+      attestations: write
+
     steps:
       - name: Download Release Assets
         uses: actions/download-artifact@v4
