@@ -1,0 +1,68 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Check for stale issues and pull requests
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  lint:
+    name: Lint Documentation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create GitHub App Token
+        uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ vars.FHIR_BELLOWS_APP_ID }}
+          private-key: ${{ secrets.FHIR_BELLOWS_PRIVATE_KEY }}
+
+      - name: Check Stale Issues
+        id: check-stale
+        uses: actions/stale@v9
+        with:
+          repo-token: ${{ steps.app-token.outputs.token }}
+          remove-stale-when-updated: true
+
+          # PR-specific Settings
+          exempt-draft-pr: true
+          stale-pr-label: Stale
+          days-before-pr-stale: 30
+          days-before-pr-close: 15
+          stale-pr-message: |
+            This pull request has is marked stale because it has not had any
+            activity in 30 days and will be closed in 15 days if no further
+            activity occurs.
+
+            > [!TIP]
+            > Some tips to help keep this pull request open:
+            >
+            > * If this is a awaiting an action from you, please comment on the
+            >   pull request to let us know, and it will keep it open.
+            >
+            > * If this is waiting on an action from a maintainer and you haven't
+            >   heard back, consider giving them a reminder to ensure this hasn't
+            >   slipped through the cracks.
+            >
+            > * If you are trialing some code and don't want this closed but it
+            >   is not ready for an active review, please mark the pull request
+            >   as a `draft`, and it won't be marked as stale.
+
+            Thank you for your understanding and cooperation!
+
+          # Issue-specific Settings
+          stale-issue-label: Stale
+          days-before-issue-stale: 90
+          days-before-issue-close: -1 # Never close issues automatically
+          stale-issue-message: |
+            This issue has been automatically marked as stale because it has
+            not had any activity in 90 days, but we won't close it -- we don't
+            want to lose track of it!
+
+            If you have any updates or additional information to provide, please
+            comment and leave any updates on the issue.

@@ -40,7 +40,8 @@ jobs:
       url: ${{github.server_url}}/${{github.repository}}/tree/${{inputs.branch}}
 
     steps:
-      - uses: actions/create-github-app-token@v1
+      - name: Create GitHub App Token
+        uses: actions/create-github-app-token@v1
         id: app-token
         with:
           app-id: ${{ vars.FHIR_BELLOWS_APP_ID }}

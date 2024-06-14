@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Scheduled Stale Check
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  check-stale:
+    name: Check Stale
+    uses: friendly-fhir/.github/.github/workflows/community-stale-check.yaml@master
