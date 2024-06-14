@@ -1,0 +1,13 @@
+{
+  "name": "Go: Release",
+  "description": "Create a release of a Go project or tool",
+  "iconName": "octicon tag",
+  "categories": [
+    "Go",
+    "GitHub",
+    "Release Management"
+  ],
+  "filePatterns": [
+    ".*\\.go$"
+  ]
+}

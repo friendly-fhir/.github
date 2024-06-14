@@ -1,0 +1,9 @@
+{
+  "name": "Promote Branch",
+  "description": "Promote a branch from one environment to another",
+  "iconName": "octicon branch",
+  "categories": [
+    "GitHub"
+  ],
+  "filePatterns": []
+}

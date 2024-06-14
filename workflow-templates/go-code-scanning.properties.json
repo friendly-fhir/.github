@@ -1,0 +1,11 @@
+{
+  "name": "Go: Code Scanning",
+  "description": "Code-scanning workflows for Go projects",
+  "iconName": "octicon codescan-checkmark",
+  "categories": [
+    "Go"
+  ],
+  "filePatterns": [
+    ".*\\.go$"
+  ]
+}

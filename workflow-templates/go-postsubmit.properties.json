@@ -1,0 +1,11 @@
+{
+  "name": "Go: Post-Submit",
+  "description": "Post-Submit checks for Go projects",
+  "iconName": "octicon workflow",
+  "categories": [
+    "Go"
+  ],
+  "filePatterns": [
+    ".*\\.go$"
+  ]
+}
