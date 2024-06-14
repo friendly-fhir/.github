@@ -1,0 +1,6 @@
+# Admins are always in charge of workflow and CODEOWNER changes by default.
+# Everything else can fall back onto maintainers.
+
+.github/* @friendly-fhir/fhir-marshals
+CODEOWNERS @friendly-fhir/fhir-marshals
+* @friendly-fhir/fhiring-squad
