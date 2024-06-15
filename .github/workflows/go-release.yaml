@@ -93,6 +93,9 @@ jobs:
         with:
           version: latest
 
+      - name: Create Output Directory
+        run: mkdir -p "${{inputs.workdir}}"
+
       - name: Create Release
         if: ${{ !inputs.snapshot }}
         uses: goreleaser/goreleaser-action@v5
@@ -100,6 +103,7 @@ jobs:
           distribution: goreleaser
           version: "~> v1"
           args: release --clean
+          workdir: "${{inputs.workdir}}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
