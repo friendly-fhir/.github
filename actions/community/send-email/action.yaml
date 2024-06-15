@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-action.json
+name: Send Email
+description: Sends an email using Mailgun
+
+inputs:
+  recipient:
+    description: The email address of the recipient
+    required: true
+  subject:
+    description: The subject of the email
+    required: true
+  body:
+    description: The body of the email
+    required: true
+  api-key:
+    description: The API key
+    required: true
+  sender-account:
+    description: The account name of the sender. Will always be @ci.friendly-fhir.org.
+    required: false
+    default: fhir-bellows-noreply
+  sender-name:
+    description: The name of the sender
+    required: false
+    default: FHIR Bellows (Bot)
+
+runs:
+  using: composite
+  steps:
+    - name: Generate License Manifest
+      shell: bash
+      run: |
+        curl -s --user 'api:${{ inputs.api-key }}' \
+          https://api.mailgun.net/v3/ci.friendly-fhir.org/messages \
+          -F from='${{ inputs.sender-name }} <${{ inputs.sender-account }}@ci.friendly-fhir.org>' \
+          -F to=${{ inputs.recipient }} \
+          -F subject='${{ inputs.subject }}' \
+          -F text='${{ inputs.body }}'
+
