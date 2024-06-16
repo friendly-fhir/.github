@@ -116,7 +116,7 @@ jobs:
           project_name=$(cat "${dist}/metadata.json" | jq -r '.project_name')
           echo "dist=${dist}" >> "${GITHUB_OUTPUT}"
           echo "project-name=${project_name}" >> "${GITHUB_OUTPUT}"
-          echo "sbom-configured=${sbom_configured}" >> "${GITHUB_OUTPUT}
+          echo "sbom-configured=${sbom_configured}" >> "${GITHUB_OUTPUT}"
 
       # The created artifacts contain both directories that have the binaries
       # as well as archives that contain the same content. Remove the duplicate
