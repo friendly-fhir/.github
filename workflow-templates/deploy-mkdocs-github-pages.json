@@ -1,0 +1,12 @@
+{
+  "name": "mkdocs: Deploy GitHub Pages",
+  "description": "Generate and deploy GitHub Pages from a MKDocs project",
+  "iconName": "octicon book",
+  "categories": [
+    "Go"
+  ],
+  "filePatterns": [
+    "mkdocs.yaml$",
+    "**/*.md$"
+  ]
+}
