@@ -96,7 +96,11 @@ jobs:
         shell: bash
         run: |
           file="$(cd '${{ runner.temp }}'; pwd)/${{ matrix.os }}-coverage.out"
-          echo "coverage-file=${file}" >> "${GITHUB_OUTPUT}"
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            echo 'coverage-file=${{ runner.temp }}\${{ matrix.os }}-coverage.out' >> "${GITHUB_OUTPUT}"
+          else
+            echo "coverage-file=${file}" >> "${GITHUB_OUTPUT}"
+          fi
           if ${{ inputs.short-test }}; then
             go test -short -v -coverprofile "${file}" ${{ inputs.packages }}
           else
