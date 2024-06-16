@@ -162,6 +162,7 @@ jobs:
         job: ${{ fromJson(needs.release.outputs.jobs) }}
     permissions:
       attestations: write
+      id-token: write
 
     steps:
       - name: Download Release Assets
