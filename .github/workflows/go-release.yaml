@@ -23,11 +23,6 @@ on:
         description: The GitHub authorization token to use for the release.
         default: ${{ github.token }}
         required: false
-      workdir:
-        type: string
-        description: The working directory to use for the release.
-        default: dist
-        required: false
       artifact-name:
         type: string
         description: |
@@ -93,9 +88,6 @@ jobs:
         with:
           version: latest
 
-      - name: Create Output Directory
-        run: mkdir -p "${{inputs.workdir}}"
-
       - name: Create Release
         if: ${{ !inputs.snapshot }}
         uses: goreleaser/goreleaser-action@v5
@@ -103,7 +95,6 @@ jobs:
           distribution: goreleaser
           version: "~> v1"
           args: release --clean
-          workdir: "${{inputs.workdir}}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -114,12 +105,14 @@ jobs:
           distribution: goreleaser
           version: "~> v1"
           args: release --clean --snapshot
-          workdir: "${{inputs.workdir}}"
 
       - name: Read metadata
         id: metadata
         run: |
-          project_name=$(cat "${{inputs.workdir}}/metadata.json" | jq -r '.project_name')
+          dist=$(yq '.dist // "dist"' .goreleaser.yaml)
+          dist=$(cd ${dist}; pwd)
+          project_name=$(cat "${dist}/metadata.json" | jq -r '.project_name')
+          echo "dist=${dist}" >> "${GITHUB_OUTPUT}"
           echo "project-name=${project_name}" >> "${GITHUB_OUTPUT}"
 
       # The created artifacts contain both directories that have the binaries
@@ -131,15 +124,16 @@ jobs:
       # be used for code-signing in the future.
       - name: Clean up Release
         run: |
-          find dist -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} \;
-          rm -f ${{inputs.workdir}}/{config.yaml,checksums.txt,artifacts.json,metadata.json}
+          dist="${{steps.metadata.outputs.dist}}"
+          find "${dist}" -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} \;
+          rm -f ${dist}/{config.yaml,checksums.txt,artifacts.json,metadata.json}
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         id: release-artifact
         with:
           name: ${{inputs.artifact-name}}
-          path: ${{inputs.workdir}}/${{steps.metadata.outputs.project-name}}_*
+          path: ${{steps.metadata.outputs.dist}}/${{steps.metadata.outputs.project-name}}_*
           retention-days: 7
 
       - name: Create Attestation Jobs
