@@ -1,0 +1,40 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-action.json
+name: Git Status
+description: Checks the current state of the repository
+
+outputs:
+  state:
+    description: The states of the repository
+    value: ${{ steps.status.outputs.state }}
+  staged:
+    description: |
+       A boolean string indicating if it's staged. Use `fromJson` to convert to
+       a boolean before using this as a condition.
+    value: ${{ steps.status.outputs.staged }}
+  dirty:
+    description: |
+      A boolean string indicating if it's dirty.  Use `fromJson` to convert to
+      a boolean before using this as a condition.
+    value: ${{ steps.status.outputs.dirty }}
+
+runs:
+  using: composite
+  steps:
+    - name: Check for staged content
+      id: status
+      shell: bash
+      run: |
+        states=()
+        if git diff --quiet --cached; then
+          echo "staged=false" >> "${GITHUB_OUTPUT}"
+        else
+          echo "staged=true" >> "${GITHUB_OUTPUT}"
+          states+=("staged")
+        fi
+        if git diff --quiet; then
+          echo "dirty=false" >> "${GITHUB_OUTPUT}"
+        else
+          echo "dirty=true" >> "${GITHUB_OUTPUT}"
+          states+=("dirty")
+        fi
+        echo "state=${states[@]}" >> "${GITHUB_OUTPUT}"

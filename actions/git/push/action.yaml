@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-action.json
+name: Git Push
+description: Pushes the committed content to the repository
+
+inputs:
+  branch:
+    description: |
+      The branch to push the commit to.
+      Defaults to the current branch.
+    required: false
+    default: "${{ github.ref_name }}"
+  flags:
+    description: |
+      Additional flags to pass to the push command.
+      No flags on by default. This is where you can pass --force to overwrite
+      the remote branch.
+    required: false
+    default: ""
+  ref:
+    description: |
+      The ref to push to the remote.
+      Defaults to HEAD.
+    required: false
+    default: HEAD
+outputs:
+  sha:
+    value: ${{ steps.commit.push.sha }}
+    description: The resolved SHA of the ref that was pushed
+  branch:
+    value: ${{ inputs.branch }}
+    description: The branch pushed to
+
+runs:
+  using: composite
+  steps:
+    - name: Push
+      id: push
+      shell: bash
+      run: |
+        git push origin ${{ inputs.ref }}:${{ inputs.branch }} ${{ inputs.flags }}
+        echo "sha=$(git rev-parse ${{ inputs.ref }})" >> "${GITHUB_OUTPUT}"
+

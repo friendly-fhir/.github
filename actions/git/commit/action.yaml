@@ -1,0 +1,49 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-action.json
+name: Git Commit
+description: Commits the staged content to the repository
+
+inputs:
+  author-name:
+    description: The name of the author writing the commit
+    required: false
+    default: fhir-bellows[bot]
+  author-email:
+    description: The email of the author writing the commit
+    required: false
+    default: ${{ vars.FHIR_BELLOWS_APP_ID }}+fhir-bellows[bot]@users.noreply.github.com
+  title:
+    description: The title of the commit
+    required: true
+  body:
+    description: The body of the commit message
+    required: true
+outputs:
+  sha:
+    value: ${{ steps.commit.outputs.sha }}
+    description: The SHA of the commit
+
+runs:
+  using: composite
+  steps:
+    - name: Commit
+      id: commit
+      shell: bash
+      # These environment variables are important!
+      #
+      # The GitHub ${{ ... }} syntax is a pre-substitution done before Bash sees
+      # the content. This results things like embedded quotes to not be escaped,
+      # and this will delimit the string -- causing syntax errors. Storing as
+      # an env variable allows bash to receive the raw contents in a variable
+      # form, which is easier/safer to pass in without needing escaping.
+      env:
+        TITLE: ${{ inputs.title }}
+        BODY: ${{ inputs.body }}
+        AUTHOR_NAME: ${{ inputs.author-name }}
+        AUTHOR_EMAIL: ${{ inputs.author-email }}
+      run: |
+        git commit --allow-empty                                               \
+          -m "${TITLE}"                                                        \
+          -m "${BODY}"                                                         \
+          --author="${AUTHOR_NAME} <${AUTHOR_EMAIL}>"
+        echo "sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+

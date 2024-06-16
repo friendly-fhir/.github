@@ -1,0 +1,91 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-action.json
+name: Commit and Push changes
+description: Commits and pushes changes to the repository
+
+inputs:
+  author-name:
+    description: The name of the author writing the commit
+    required: false
+    default: fhir-bellows[bot]
+  author-email:
+    description: The email of the author writing the commit
+    required: false
+    default: ${{ vars.FHIR_BELLOWS_APP_ID }}+fhir-bellows[bot]@users.noreply.github.com
+  title:
+    description: The title of the commit
+    required: true
+  body:
+    description: The body of the commit message
+    required: true
+  github-token:
+    description: Authorization token for the GitHub API
+    required: true
+  allow-empty:
+    description: Allow an empty commit
+    required: false
+    default: "false"
+  push-to-branch:
+    description: The branch to push the commit to. If not set, is ignored.
+    required: false
+    default: ${{ github.ref_name }}
+  error-on-dirty:
+    description: |
+      If the repository is dirty, should the action error and not push?
+
+      Being in a dirty-state usually means something is either not added in a
+      commit, or is not ignored by the .gitignore file. This is a good indicator
+      that something is wrong, and should be fixed before pushing.
+
+      Defaults to true.
+    required: false
+    default: "true"
+  push-flags:
+    description: |
+      Additional flags to pass to the push command.
+      No flags on by default. This is where you can pass --force to overwrite
+      the remote branch.
+    required: false
+    default: ""
+outputs:
+  sha:
+    value: ${{ steps.commit.outputs.sha }}
+    description: The SHA of the commit
+
+runs:
+  using: composite
+  steps:
+    - name: Check Status
+      id: status
+      uses: friendly-fhir/.github/actions/git/status@master
+
+    - name: Commit
+      id: commit
+      if: ${{ fromJson(steps.status.outputs.staged) || fromJson(inputs.allow-empty) }}
+      uses: friendly-fhir/.github/actions/git/commmit@master
+      with:
+        title: ${{ inputs.title }}
+        body: ${{ inputs.body }}
+        author-name: ${{ inputs.author-name }}
+        author-email: ${{ inputs.author-email }}
+
+    - name: Error on Dirty
+      shell: bash
+      if: ${{ fromJson(steps.status.outputs.dirty) && fromJson(inputs.error-on-dirty) }}
+      run: |
+        echo "::error title=Repository is dirty::Repository is in a dirty state, not committing."
+        echo "## 🛑 Repository is Dirty"                         >> "${GITHUB_STEP_SUMMARY}"
+        echo ""                                                  >> "${GITHUB_STEP_SUMMARY}"
+        echo "Please clean up the repository before committing." >> "${GITHUB_STEP_SUMMARY}"
+        echo "If a file is not added that should be, make sure it gets added." >> "${GITHUB_STEP_SUMMARY}"
+        echo "If it's a file that should be ignored, make sure it's in the .gitignore file." >> "${GITHUB_STEP_SUMMARY}"
+        echo "" >> "${GITHUB_STEP_SUMMARY}"
+        exit 1
+
+    - name: Push
+      id: push
+      if: ${{ fromJson(steps.status.outputs.staged) || fromJson(inputs.allow-empty) }}
+      uses: friendly-fhir/.github/actions/git/push@master
+      with:
+        branch: ${{ inputs.push-to-branch }}
+        flags: ${{ inputs.push-flags }}
+        ref: ${{ steps.commit.outputs.sha }}
