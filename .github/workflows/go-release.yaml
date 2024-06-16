@@ -68,7 +68,6 @@ jobs:
       contents: write
     outputs:
       jobs: ${{ steps.create-jobs.outputs.jobs }}
-      sbom-configured: ${{ steps.metadata.outputs.sbom-configured }}
       project-name: ${{ steps.metadata.outputs.project-name }}
       artifact-id: ${{ steps.release-artifact.outputs.artifact-id }}
       artifact-url: ${{ steps.release-artifact.outputs.artifact-url }}
@@ -116,7 +115,6 @@ jobs:
           project_name=$(cat "${dist}/metadata.json" | jq -r '.project_name')
           echo "dist=${dist}" >> "${GITHUB_OUTPUT}"
           echo "project-name=${project_name}" >> "${GITHUB_OUTPUT}"
-          echo "sbom-configured=${sbom_configured}" >> "${GITHUB_OUTPUT}"
 
       # The created artifacts contain both directories that have the binaries
       # as well as archives that contain the same content. Remove the duplicate
@@ -142,8 +140,13 @@ jobs:
       - name: Create Attestation Jobs
         id: create-jobs
         run: |
-          output=$(find dist -type f -exec basename {} \; | sed 's@\.tar\.gz@@g' | sed 's@\.bom.json@@g' | sed 's@\.zip@@g' | sort -u | jq -R -s -c 'split("\n")[:-1]')
-          echo "jobs=${output}" >> "${GITHUB_OUTPUT}"
+          dist="${{steps.metadata.outputs.dist}}"
+          tar_archives=$(find "${dist}" -type f -name '*.tar.gz' -exec basename {} ".tar.gz" \;)
+          zip_archives=$(find "${dist}" -type f -name '*.zip' -exec basename {} ".zip" \;)
+          job_names=$(echo ${tar_archives} ${zip_archives})
+          job_names=$(echo ${job_names} | sort -u | jq -R -s -c 'split(" ")[:-1]')
+          echo $job_names
+          echo "jobs=${job_names}" >> "${GITHUB_OUTPUT}"
 
   # The actions/attest API doesn't make it easy to attest SBOM provenance and
   # associate it with a specific build if it's being globbed. An unfortunate
@@ -154,7 +157,7 @@ jobs:
   # created artifact. It's not ideal, but it's better than nothing.
   attest:
     name: Attest Provenance
-    if: ${{ inputs.attest-provenance }}
+    if: ${{ inputs.attest-provenance && needs.release.outputs.jobs != '[]' }}
     runs-on: ubuntu-latest
     needs: [release]
     strategy:
@@ -175,28 +178,37 @@ jobs:
         run: |
           if [[ -f "${{ matrix.job }}.zip" ]]; then
             unzip -q "${{ matrix.job }}.zip"
-            echo "extension=.exe" >> "${GITHUB_OUTPUT}"
-          fi
-          if [[ -f "${{ matrix.job }}.tar.gz" ]]; then
+            echo "subject-path=${{ needs.release.outputs.project-name }}.exe" >> "${GITHUB_OUTPUT}"
+          elif [[ -f "${{ matrix.job }}.tar.gz" ]]; then
             tar -xzf "${{ matrix.job }}.tar.gz"
-            echo "extension=" >> "${GITHUB_OUTPUT}"
+            echo "subject-path=${{ needs.release.outputs.project-name }}" >> "${GITHUB_OUTPUT}"
+          else
+            echo "::error::Failed to find artifact for ${{ matrix.job }}"
+            exit 1
           fi
+
+          # Conditionally set the SBOM path if the JSON file exists.
+          if [[ -f "${{ matrix.job }}.bom.json" ]]; then
+            echo "sbom-path=${{ matrix.job }}.bom.json" >> "${GITHUB_OUTPUT}"
+          fi
+
           # Massage the name into something a bit easier to read
           name=$(echo "${{ matrix.job }}" | sed "s@_@-@g" | sed "s@x86-64@x86_64@g")
           name=$(echo "${name}" | sed "s@-SNAPSHOT@@g")
           echo "subject-name=${name}" >> "${GITHUB_OUTPUT}"
 
       - name: Attest SBOM provenance
-        if: fromJson(needs.release.outputs.sbom-configured)
+        if: steps.unarchive.outputs.sbom-path != ''
         id: sbom
         uses: actions/attest-sbom/predicate@v1
         with:
-          sbom-path: '${{ matrix.job }}.bom.json'
+          sbom-path: ${{ steps.unarchive.outputs.sbom-path}}
 
       - name: Attest build provenance
+        if: steps.unarchive.outputs.subject-path != ''
         uses: actions/attest@v1
         with:
-          subject-path: "${{ needs.release.outputs.project-name }}${{ steps.unarchive.outputs.extension }}"
+          subject-path: "${{ steps.unarchive.outputs.subject-path }}"
           subject-name: "${{ steps.unarchive.outputs.subject-name }}"
           predicate-type: ${{ steps.sbom.outputs.predicate-type }}
           predicate-path: ${{ steps.sbom.outputs.predicate-path }}
