@@ -148,7 +148,7 @@ jobs:
       - name: Compute Coverage Percentage
         id: coverage
         run: |
-          coverage$(go tool cover -func "${{ steps.merge.outputs.coverage-file }}" | fgrep total | awk '{print $3}')
+          coverage=$(go tool cover -func "${{ steps.merge.outputs.coverage-file }}" | fgrep total | awk '{print $3}')
           echo "percent=${coverage}" >> "${GITHUB_OUTPUT}"
 
       - name: Upload Coverage
