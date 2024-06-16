@@ -68,6 +68,7 @@ jobs:
       contents: write
     outputs:
       jobs: ${{ steps.create-jobs.outputs.jobs }}
+      sbom-configured: ${{ steps.metadata.outputs.sbom-configured }}
       project-name: ${{ steps.metadata.outputs.project-name }}
       artifact-id: ${{ steps.release-artifact.outputs.artifact-id }}
       artifact-url: ${{ steps.release-artifact.outputs.artifact-url }}
@@ -111,9 +112,11 @@ jobs:
         run: |
           dist=$(yq '.dist // "dist"' .goreleaser.yaml)
           dist=$(cd ${dist}; pwd)
+          sbom_configured=$(yq e '. | has("sboms")' .goreleaser.yaml)
           project_name=$(cat "${dist}/metadata.json" | jq -r '.project_name')
           echo "dist=${dist}" >> "${GITHUB_OUTPUT}"
           echo "project-name=${project_name}" >> "${GITHUB_OUTPUT}"
+          echo "sbom-configured=${sbom_configured}" >> "${GITHUB_OUTPUT}
 
       # The created artifacts contain both directories that have the binaries
       # as well as archives that contain the same content. Remove the duplicate
@@ -183,6 +186,7 @@ jobs:
           echo "subject-name=${name}" >> "${GITHUB_OUTPUT}"
 
       - name: Attest SBOM provenance
+        if: fromJson(needs.release.outputs.sbom-configured)
         id: sbom
         uses: actions/attest-sbom/predicate@v1
         with:
