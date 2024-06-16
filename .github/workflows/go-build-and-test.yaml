@@ -133,10 +133,19 @@ jobs:
           path: ${{ runner.temp }}
           merge-multiple: true
 
+      - name: Check Coverage Files
+        id: check
+        run: |
+          count=$(ls -1 ${{ runner.temp }}/*-coverage.out | wc -l)
+          echo "count=${count}" >> "${GITHUB_OUTPUT}"
+          echo "merge-enabled=$(test $count -gt 1 && echo true || echo false)" >> "${GITHUB_OUTPUT}"
+
       - name: Install gcovmerge
+        if: fromJson(steps.check.outputs.merge-enabled)
         run: go install github.com/wadey/gocovmerge@latest
 
       - name: Merge Coverage
+        if: fromJson(steps.check.outputs.merge-enabled)
         id: merge
         run: |
           file="${{ runner.temp }}/merged/${{ inputs.coverage-file-name }}"
@@ -146,12 +155,14 @@ jobs:
           echo "coverage-file=${file}" >> "${GITHUB_OUTPUT}"
 
       - name: Compute Coverage Percentage
+        if: fromJson(steps.check.outputs.merge-enabled)
         id: coverage
         run: |
           coverage=$(go tool cover -func "${{ steps.merge.outputs.coverage-file }}" | fgrep total | awk '{print $3}')
           echo "percent=${coverage}" >> "${GITHUB_OUTPUT}"
 
       - name: Upload Coverage
+        if: fromJson(steps.check.outputs.merge-enabled)
         id: upload-coverage
         uses: actions/upload-artifact@v4
         with:
