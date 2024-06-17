@@ -1,0 +1,50 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-action.json
+name: Create Patch
+description: |
+  Creates a patch from the delta between the current branch and the target branch
+
+inputs:
+  branch:
+    description: |
+      The branch to push the commit to.
+      Defaults to the current branch.
+    required: false
+    default: "${{ github.ref_name }}"
+  artifact-name:
+    description: |
+      The name to give the patch artifact.
+      Defaults to "patch"
+    required: false
+    default: patch
+outputs:
+  patch:
+    value: ${{ steps.commit.outputs.sha }}
+    description: The SHA of the commit
+  artifact-id:
+    value: ${{ steps.commit.push.sha }}
+    description: The resolved SHA of the ref that was pushed
+  artifact-name:
+    value: ${{ inputs.artifact-name }}
+    description: The name to give the patch artifact
+
+runs:
+  using: composite
+  steps:
+    - name: Create Patch
+      id: patch
+      shell: bash
+      run: |
+        file="${{runner.temp}}/content.patch"
+        git diff --cached --no-color ${{ inputs.branch }}..HEAD > "${file}"
+
+        echo "patch=$(cat "${{runner.temp}}/content.patch")" >> "${GITHUB_OUTPUT}"
+        echo "file=${{runner.temp}}/content.patch" >> "${GITHUB_OUTPUT}"
+
+    - name: Upload Patch
+      if: ${{ inputs.artifact-name != '' }}
+      id: upload
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        file: ${{ steps.patch.outputs.file }}
+
