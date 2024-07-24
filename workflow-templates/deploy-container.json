@@ -1,0 +1,15 @@
+{
+  "name": "Go: Release",
+  "description": "Create a release of a Go project or tool",
+  "iconName": "octicon rocket",
+  "categories": [
+    "Release Management",
+    "Deployment",
+    "Docker"
+  ],
+  "filePatterns": [
+    ".*\\.dockerfile$",
+    ".*\\.docker$",
+    "Dockerfile"
+  ]
+}

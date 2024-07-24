@@ -1,0 +1,7 @@
+{
+  "name": "Community staleness check",
+  "description": "Checks for stale issues and pull requests in a community repository",
+  "iconName": "octicon book",
+  "categories": [],
+  "filePatterns": []
+}

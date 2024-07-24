@@ -1,0 +1,155 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Deploy Docker Container
+
+on:
+  workflow_call:
+    inputs:
+      registry:
+        description: |
+          The registry to push the image to. Defaults to ghcr.io.
+        required: true
+        type: string
+      image-name:
+        description: |
+          The name of the image to build. This does not include the full
+          qualification, owner, etc.
+        required: true
+        type: string
+      username:
+        description: |
+          The username to use when logging in to the registry.
+        required: true
+        type: string
+      password:
+        description: |
+          The password to use when logging in to the registry.
+        required: true
+        type: string
+      dockerfile:
+        description: |
+          The path to the Dockerfile to build.
+          If unspecified, defaults to 'Dockerfile' in the root of the repository.
+        required: false
+        default: Dockerfile
+        type: string
+      path:
+        description: |
+          The path to build. This corresponds to the <path> argument in 'docker build'.
+          If unspecified, defaults to '.'
+        required: false
+        type: string
+        default: '.'
+      dry-run:
+        description: |
+          If true, the workflow will not push the image to the registry.
+        required: false
+        default: false
+        type: boolean
+      image-id:
+        description: |
+          The fully qualified image id to use.
+          If unspecified, it is computed.
+        required: false
+        type: string
+      tag:
+        description: |
+          The tag to use for the image.
+          If unspecified, it is computed.
+        required: false
+        type: string
+
+    outputs:
+      image-id:
+        description: The name of the image that was built.
+        value: ${{ jobs.deploy.outputs.image-id }}
+      version:
+        description: The version of the image that was built.
+        value: ${{ jobs.deploy.outputs.version }}
+      tagged-image-id:
+        description: The fully qualified image id that was built, including version.
+        value: ${{ jobs.deploy.outputs.tagged-image-id }}
+
+jobs:
+  deploy:
+    name: Deploy to Container Registry
+    runs-on: ubuntu-latest
+
+    outputs:
+      image-id: ${{ steps.image.outputs.id }}
+      version: ${{ steps.tag.outputs.version }}
+      tagged-image-id: ${{ steps.image.outputs.id }}:${{ steps.tag.outputs.version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine image
+        id: image
+        run: |
+          if [[ -n "${{ inputs.image-id }}" ]]; then
+            image_id=${{ inputs.image-id }}
+          else
+            image_id=${{ inputs.registry }}/${{ inputs.username }}/${{ inputs.image-name }}
+
+            # Normalize to lowercase
+            image_id=$(echo $image_id | tr '[A-Z]' '[a-z]')
+          fi
+
+          echo "id=${image_id}" >> "${GITHUB_OUTPUT}"
+
+      - name: Determine tag
+        id: tag
+        run: |
+          if [[ -n "${{ inputs.tag }}" ]]; then
+            version=${{ inputs.tag }}
+          else
+            # Extract ref prefix for versions and cut the 'v' prefix
+            if [[ "${{ github.ref }}" == "refs/tags/v"* ]]; then
+              version=$(echo $version | sed -e 's/^v//')
+            elif [[ "${{ github.ref }}" == "refs/heads/${{ github.event.repository.default_branch }}" ]]; then
+              version=latest
+            else
+              version=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+            fi
+          fi
+
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+
+      - name: Login to Registry
+        id: login
+        run: |
+          docker login ${{ inputs.registry }}                                  \
+            --username ${{ inputs.username }}                                  \
+            --password ${{ inputs.password }}
+
+      - name: Build Docker Image
+        run: |
+          url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          repo=${{ github.event.repository.name }}
+          owner=${{ github.repository_owner }}
+          timestamp=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+
+          docker build                                                         \
+            --file ${{ inputs.dockerfile }}                                    \
+            --tag ${{ inputs.image-name }}                                     \
+            --label "org.friendly-fhir.run.number=${{ github.run_number }}"    \
+            --label "org.friendly-fhir.run.attempt=${{ github.run_attempt }}"  \
+            --label "org.friendly-fhir.run.actor=${{ github.actor }}"          \
+            --label "org.friendly-fhir.run.event=${{ github.event_name }}"     \
+            --label "org.friendly-fhir.run=${{ github.run_id }}"               \
+            --label "org.friendly-fhir.source.sha=${{ github.sha }}"           \
+            --label "org.friendly-fhir.source.ref=${{ github.ref }}"           \
+            --label "org.friendly-fhir.source.repo=${repo}"                    \
+            --label "org.friendly-fhir.source.owner=${owner}"                  \
+            --label "org.friendly-fhir.source=${url}"                          \
+            --label "org.friendly-fhir.build-time=${timestamp}"                \
+            ${{ inputs.path }}
+
+      - name: Tag created build
+        run: |
+          docker tag ${{ inputs.image-name }} ${{ steps.image.outputs.id }}:${{ steps.tag.outputs.version }}
+
+      - name: Push Docker Image
+        if: ${{ !inputs.dry-run }}
+        run: |
+          docker push "${{ steps.image.outputs.id }}:${{ steps.tag.outputs.version }}"
