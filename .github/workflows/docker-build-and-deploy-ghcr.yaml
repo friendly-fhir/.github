@@ -56,6 +56,8 @@ on:
 permissions:
   contents: read
   packages: write
+  attestations: write
+  id-token: write
 
 jobs:
   deploy:
@@ -109,39 +111,46 @@ jobs:
 
       - name: Login to Registry
         id: login
-        run: |
-          docker login ghcr.io                                                 \
-            --username ${{ github.actor }}                                     \
-            --password ${{ steps.select.outputs.token }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ steps.select.outputs.token }}
 
-      - name: Build Docker Image
+      - name: Collect label information
+        id: label
         run: |
-          url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          repo=${{ github.event.repository.name }}
-          owner=${{ github.repository_owner }}
-          timestamp=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+          echo "url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> "${GITHUB_OUTPUT}"
+          echo "repo=${{ github.event.repository.name }}" >> "${GITHUB_OUTPUT}"
+          echo "owner=${{ github.repository_owner }}" >> "${GITHUB_OUTPUT}"
+          echo "timestamp=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "${GITHUB_OUTPUT}"
 
-          docker build                                                         \
-            --file ${{ inputs.dockerfile }}                                    \
-            --tag ${{ inputs.image-name }}                                     \
-            --label "org.friendly-fhir.run.number=${{ github.run_number }}"    \
-            --label "org.friendly-fhir.run.attempt=${{ github.run_attempt }}"  \
-            --label "org.friendly-fhir.run.actor=${{ github.actor }}"          \
-            --label "org.friendly-fhir.run.event=${{ github.event_name }}"     \
-            --label "org.friendly-fhir.run=${{ github.run_id }}"               \
-            --label "org.friendly-fhir.source.sha=${{ github.sha }}"           \
-            --label "org.friendly-fhir.source.ref=${{ github.ref }}"           \
-            --label "org.friendly-fhir.source.repo=${repo}"                    \
-            --label "org.friendly-fhir.source.owner=${owner}"                  \
-            --label "org.friendly-fhir.source=${url}"                          \
-            --label "org.friendly-fhir.build-time=${timestamp}"                \
-            ${{ inputs.path }}
+      - name: Build and push image
+        id: push
+        uses: docker/build-push-action@v5.0.0
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.image.outputs.id }}:${{ steps.tag.outputs.version }}
+          labels: |
+            org.friendly-fhir.run.number=${{ github.run_number }}"
+            org.friendly-fhir.run.attempt=${{ github.run_attempt }}"
+            org.friendly-fhir.run.actor=${{ github.actor }}"
+            org.friendly-fhir.run.event=${{ github.event_name }}"
+            org.friendly-fhir.run=${{ github.run_id }}"
+            org.friendly-fhir.source.sha=${{ github.sha }}"
+            org.friendly-fhir.source.ref=${{ github.ref }}"
+            org.friendly-fhir.source.repo=${{ steps.label.outputs.repo }}"
+            org.friendly-fhir.source.owner=${{ steps.label.outputs.owner }}"
+            org.friendly-fhir.source=${{ steps.label.outputs.url }}"
+            org.friendly-fhir.build-time=${{ steps.label.outputs.timestamp }}"
 
-      - name: Tag created build
-        run: |
-          docker tag ${{ inputs.image-name }} ${{ steps.image.outputs.id }}:${{ steps.tag.outputs.version }}
-
-      - name: Push Docker Image
-        if: ${{ !inputs.dry-run }}
-        run: |
-          docker push "${{ steps.image.outputs.id }}:${{ steps.tag.outputs.version }}"
+      - name: Attest Build Provenance
+        uses: actions/attest-build-provenance@v1
+        id: attest
+        with:
+          subject-name: ${{ steps.image.outputs.id }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+          github-token: ${{ github.token }}

@@ -11,6 +11,8 @@ on:
 permissions:
   contents: read
   packages: write
+  attestations: write
+  id-token: write
 
 jobs:
   deploy-docker-container:
@@ -19,3 +21,5 @@ jobs:
     permissions:
       contents: read
       packages: write
+      attestations: write
+      id-token: write
