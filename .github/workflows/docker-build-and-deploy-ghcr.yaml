@@ -9,19 +9,6 @@ on:
         required: false
         type: string
         default: ${{ github.event.repository.name }}
-      app-id:
-        description: |
-          The ID of the GitHub App to use for authentication.
-          If unspecified, the user will be the actor.
-        required: false
-        type: string
-      app-private-key:
-        description: |
-          The private key of the GitHub App to use for authentication.
-          If unspecified, the password will be the github.token -- and must be
-          a token with packages: write permissions.
-        required: false
-        type: string
       dockerfile:
         description: |
           The path to the Dockerfile to build.
@@ -73,23 +60,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Authenticate GitHub App
-        id: authenticate
-        if: ${{ inputs.app-id && inputs.app-private-key }}
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ inputs.app-id }}
-          private-key: ${{ inputs.app-private-key }}
-
-      - name: Select Token
-        id: select
-        run: |
-          if [[ -n "${{ inputs.app-id }}" && -n "${{ inputs.app-private-key }}" ]]; then
-            echo "token=${{ steps.authenticate.outputs.token }}" >> "${GITHUB_OUTPUT}"
-          else
-            echo "token=${{ github.token }}" >> "${GITHUB_OUTPUT}"
-          fi
-
       - name: Determine image
         id: image
         run: |
@@ -115,7 +85,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ steps.select.outputs.token }}
+          password: ${{ github.token }}
 
       - name: Collect label information
         id: label
