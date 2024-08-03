@@ -134,8 +134,8 @@ jobs:
         id: release-artifact
         with:
           name: ${{inputs.artifact-name}}
-          path: ${{steps.metadata.outputs.dist}}/${{steps.metadata.outputs.project-name}}*
-          retention-days: 7
+          path: ${{steps.metadata.outputs.dist}}/*
+          retention-days: 1
 
       - name: Create Attestation Jobs
         id: create-jobs
@@ -173,15 +173,26 @@ jobs:
         with:
           name: ${{ needs.release.outputs.artifact-name }}
 
+      - name: Print Asset Contents
+        run: ls -l
+
       - name: Unarchive Assets
         id: unarchive
         run: |
           if [[ -f "${{ matrix.job }}.zip" ]]; then
             unzip -q "${{ matrix.job }}.zip"
-            echo "subject-path=${{ needs.release.outputs.project-name }}.exe" >> "${GITHUB_OUTPUT}"
+            if [[ -d "${{ matrix.job }}" ]]; then
+              echo "subject-path=${{ matrix.job }}/${{ needs.release.outputs.project-name }}.exe" >> "${GITHUB_OUTPUT}"
+            else
+              echo "subject-path=${{ needs.release.outputs.project-name }}.exe" >> "${GITHUB_OUTPUT}"
+            fi
           elif [[ -f "${{ matrix.job }}.tar.gz" ]]; then
             tar -xzf "${{ matrix.job }}.tar.gz"
-            echo "subject-path=${{ needs.release.outputs.project-name }}" >> "${GITHUB_OUTPUT}"
+            if [[ -d "${{ matrix.job }}" ]]; then
+              echo "subject-path=${{ matrix.job }}/${{ needs.release.outputs.project-name }}" >> "${GITHUB_OUTPUT}"
+            else
+              echo "subject-path=${{ needs.release.outputs.project-name }}" >> "${GITHUB_OUTPUT}"
+            fi
           else
             echo "::error::Failed to find artifact for ${{ matrix.job }}"
             exit 1
