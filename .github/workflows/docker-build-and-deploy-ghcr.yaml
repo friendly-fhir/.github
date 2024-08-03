@@ -100,11 +100,11 @@ jobs:
         run: |
           # Extract ref prefix for versions and cut the 'v' prefix
           if [[ "${{ github.ref }}" == "refs/tags/v"* ]]; then
-            version=$(echo $version | sed -e 's/^v//')
+            version=$(echo "${{ github.ref }}" | sed -e 's@^refs/tags/v@@')
           elif [[ "${{ github.ref }}" == "refs/heads/${{ github.event.repository.default_branch }}" ]]; then
             version=latest
           else
-            version=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+            version=$(echo "${{ github.ref }}" | sed -e 's@.*/\(.*\)@\1@')
           fi
 
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
