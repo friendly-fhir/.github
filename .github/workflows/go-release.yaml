@@ -134,7 +134,7 @@ jobs:
         id: release-artifact
         with:
           name: ${{inputs.artifact-name}}
-          path: ${{steps.metadata.outputs.dist}}/${{steps.metadata.outputs.project-name}}_*
+          path: ${{steps.metadata.outputs.dist}}/${{steps.metadata.outputs.project-name}}*
           retention-days: 7
 
       - name: Create Attestation Jobs
