@@ -29,11 +29,6 @@ on:
         required: false
         type: string
         default: '.'
-      description:
-        description: |
-          The description of the image.
-        required: false
-        type: string
     outputs:
       image-id:
         description: The name of the image that was built.
@@ -99,18 +94,6 @@ jobs:
           echo "repo=${{ github.event.repository.name }}" >> "${GITHUB_OUTPUT}"
           echo "owner=${{ github.repository_owner }}" >> "${GITHUB_OUTPUT}"
           echo "timestamp=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "${GITHUB_OUTPUT}"
-          if [[ -z "${{ inputs.description }}" ]]; then
-            if [[ -f "${{ github.workspace }}/README.md" ]]; then
-              echo "description=$(cat ${{ github.workspace }}/README.md)" >> "${GITHUB_OUTPUT}"
-            else
-              echo "description=No description provided" >> "${GITHUB_OUTPUT}"
-            fi
-          else
-            description=<<<EOF
-              ${{ inputs.description }}
-            EOF
-            echo description=$description >> "${GITHUB_OUTPUT}"
-          fi
 
       - name: Build and push image
         id: push
@@ -132,7 +115,6 @@ jobs:
             org.friendly-fhir.source.owner=${{ steps.label.outputs.owner }}
             org.friendly-fhir.source=${{ steps.label.outputs.url }}
             org.friendly-fhir.build-time=${{ steps.label.outputs.timestamp }}
-            org.opencontainers.image.description=${{ steps.label.outputs.description }}
 
       - name: Attest Build Provenance
         uses: actions/attest-build-provenance@v1
