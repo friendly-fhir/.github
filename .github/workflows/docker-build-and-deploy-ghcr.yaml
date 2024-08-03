@@ -114,7 +114,15 @@ jobs:
             org.friendly-fhir.source.repo=${{ steps.label.outputs.repo }}
             org.friendly-fhir.source.owner=${{ steps.label.outputs.owner }}
             org.friendly-fhir.source=${{ steps.label.outputs.url }}
-            org.friendly-fhir.build-time=${{ steps.label.outputs.timestamp }}
+            org.opencontainers.image.ref.name=${{ github.ref_name}}
+            org.opencontainers.image.vendor=Friendly FHIR
+            org.opencontainers.image.title=${{ inputs.image-name }}
+            org.opencontainers.image.licenses=${{ github.event.repository.license }}
+            org.opencontainers.image.description=${{ github.event.repository.description }}
+            org.opencontainers.image.documentation=https://friendly-fhir.org/${{ steps.label.outputs.repo }}
+            org.opencontainers.image.url=${{ steps.label.outputs.url }}
+            org.opencontainers.image.source=${{ steps.label.outputs.url }}
+            org.opencontainers.image.created=${{ steps.label.outputs.timestamp }}
 
       - name: Attest Build Provenance
         uses: actions/attest-build-provenance@v1
