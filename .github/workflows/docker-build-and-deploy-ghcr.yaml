@@ -104,17 +104,17 @@ jobs:
           tags: |
             ${{ steps.image.outputs.id }}:${{ steps.tag.outputs.version }}
           labels: |
-            org.friendly-fhir.run.number=${{ github.run_number }}"
-            org.friendly-fhir.run.attempt=${{ github.run_attempt }}"
-            org.friendly-fhir.run.actor=${{ github.actor }}"
-            org.friendly-fhir.run.event=${{ github.event_name }}"
-            org.friendly-fhir.run=${{ github.run_id }}"
-            org.friendly-fhir.source.sha=${{ github.sha }}"
-            org.friendly-fhir.source.ref=${{ github.ref }}"
-            org.friendly-fhir.source.repo=${{ steps.label.outputs.repo }}"
-            org.friendly-fhir.source.owner=${{ steps.label.outputs.owner }}"
-            org.friendly-fhir.source=${{ steps.label.outputs.url }}"
-            org.friendly-fhir.build-time=${{ steps.label.outputs.timestamp }}"
+            org.friendly-fhir.run.number=${{ github.run_number }}
+            org.friendly-fhir.run.attempt=${{ github.run_attempt }}
+            org.friendly-fhir.run.actor=${{ github.actor }}
+            org.friendly-fhir.run.event=${{ github.event_name }}
+            org.friendly-fhir.run=${{ github.run_id }}
+            org.friendly-fhir.source.sha=${{ github.sha }}
+            org.friendly-fhir.source.ref=${{ github.ref }}
+            org.friendly-fhir.source.repo=${{ steps.label.outputs.repo }}
+            org.friendly-fhir.source.owner=${{ steps.label.outputs.owner }}
+            org.friendly-fhir.source=${{ steps.label.outputs.url }}
+            org.friendly-fhir.build-time=${{ steps.label.outputs.timestamp }}
 
       - name: Attest Build Provenance
         uses: actions/attest-build-provenance@v1
