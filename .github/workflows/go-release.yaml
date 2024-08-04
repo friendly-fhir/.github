@@ -95,6 +95,8 @@ jobs:
         with:
           app-id: ${{ vars.FHIR_BELLOWS_APP_ID }}
           private-key: ${{ secrets.FHIR_BELLOWS_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }},homebrew-tap
 
       - name: Create Release
         if: ${{ !inputs.snapshot }}
