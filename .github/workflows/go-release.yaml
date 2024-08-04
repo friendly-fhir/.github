@@ -89,6 +89,7 @@ jobs:
           version: latest
 
       - name: Create GitHub App Token
+        if: ${{ !inputs.snapshot }}
         uses: actions/create-github-app-token@v1
         id: app-token
         with:
