@@ -39,6 +39,14 @@ on:
         default: true
         required: false
 
+    secrets:
+      DEPLOY_KEY:
+        description: |
+          SSH private key of a deploy key with write access to a secondary
+          repository that the release publishes to, such as a Homebrew tap.
+          Exposed to GoReleaser as the DEPLOY_KEY environment variable.
+        required: false
+
     outputs:
       release-artifact-id:
         description: The artifact ID of the uploaded release
@@ -88,16 +96,6 @@ jobs:
         with:
           version: latest
 
-      - name: Create GitHub App Token
-        if: ${{ !inputs.snapshot }}
-        uses: actions/create-github-app-token@v1
-        id: app-token
-        with:
-          app-id: ${{ vars.FHIR_BELLOWS_APP_ID }}
-          private-key: ${{ secrets.FHIR_BELLOWS_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: ${{ github.event.repository.name }},homebrew-tap
-
       - name: Create Release
         if: ${{ !inputs.snapshot }}
         uses: goreleaser/goreleaser-action@v5
@@ -106,7 +104,8 @@ jobs:
           version: "~> v1"
           args: release --clean
         env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITHUB_TOKEN: ${{ inputs.token }}
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
 
       - name: Create Snapshot Release
         if: ${{ inputs.snapshot }}

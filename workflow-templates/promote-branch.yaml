@@ -32,7 +32,8 @@ jobs:
     uses: friendly-fhir/.github/.github/workflows/promote-branch.yaml@master
     with:
       branch: master
-    secrets: inherit
+    secrets:
+      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
     permissions:
       contents: write
       id-token: write

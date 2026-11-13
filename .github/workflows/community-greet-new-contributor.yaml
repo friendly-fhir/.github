@@ -13,13 +13,6 @@ jobs:
     name: Greet new contributors
     runs-on: ubuntu-latest
     steps:
-      - name: Create GitHub App Token
-        uses: actions/create-github-app-token@v1
-        id: app-token
-        with:
-          app-id: ${{ vars.FHIR_BELLOWS_APP_ID }}
-          private-key: ${{ secrets.FHIR_BELLOWS_PRIVATE_KEY }}
-
       - uses: actions/first-interaction@v1
         with:
           repo-token: ${{ github.token }}

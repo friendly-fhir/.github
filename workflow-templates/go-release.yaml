@@ -26,6 +26,8 @@ jobs:
     uses: friendly-fhir/.github/.github/workflows/go-release.yaml@master
     with:
       snapshot: false
+    secrets:
+      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
     permissions:
       contents: write
       attestations: write
