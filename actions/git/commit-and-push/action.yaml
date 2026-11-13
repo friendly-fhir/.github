@@ -61,7 +61,7 @@ runs:
     - name: Commit
       id: commit
       if: ${{ fromJson(steps.status.outputs.staged) || fromJson(inputs.allow-empty) }}
-      uses: friendly-fhir/.github/actions/git/commmit@master
+      uses: friendly-fhir/.github/actions/git/commit@master
       with:
         title: ${{ inputs.title }}
         body: ${{ inputs.body }}

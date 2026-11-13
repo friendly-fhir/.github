@@ -68,10 +68,10 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.1
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7.0.0
         with:
           go-version-file: ${{inputs.go-version-file}}
 
@@ -91,7 +91,7 @@ jobs:
       - name: Upload License Manifest
         if: success() && inputs.artifact-name != ''
         id: upload
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: ${{inputs.artifact-name}}
           path: ${{steps.manifest.outputs.output-file}}

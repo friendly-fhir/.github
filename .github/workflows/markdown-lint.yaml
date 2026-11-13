@@ -27,9 +27,9 @@ jobs:
 
     steps:
     - name: Check out code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7.0.1
 
-    - uses: DavidAnson/markdownlint-cli2-action@v16
+    - uses: DavidAnson/markdownlint-cli2-action@v25.0.0
       with:
         globs: ${{inputs.globs}}
         config: ${{inputs.config}}

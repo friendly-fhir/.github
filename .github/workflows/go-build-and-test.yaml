@@ -76,10 +76,10 @@ jobs:
     runs-on: ${{ matrix.os }}-latest
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.1
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7.0.0
         with:
           go-version-file: ${{ inputs.go-version-file }}
 
@@ -111,7 +111,7 @@ jobs:
           fi
 
       - name: Upload Coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: ${{ inputs.os-coverage-artifact-prefix }}${{ matrix.os }}
           path: ${{ steps.test.outputs.coverage-file }}
@@ -127,7 +127,7 @@ jobs:
       coverage-percent: ${{ steps.coverage.outputs.percent }}
     steps:
       - name: Download Coverage
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8.0.2
         with:
           pattern: ${{ inputs.os-coverage-artifact-prefix }}*
           path: ${{ runner.temp }}
@@ -164,7 +164,7 @@ jobs:
       - name: Upload Coverage
         if: fromJson(steps.check.outputs.merge-enabled)
         id: upload-coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: ${{ inputs.coverage-artifact-name }}
           path: "${{ steps.merge.outputs.coverage-file }}"

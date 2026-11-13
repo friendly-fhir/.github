@@ -43,8 +43,8 @@ runs:
     - name: Upload Patch
       if: ${{ inputs.artifact-name != '' }}
       id: upload
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7.0.2
       with:
         name: ${{ inputs.artifact-name }}
-        file: ${{ steps.patch.outputs.file }}
+        path: ${{ steps.patch.outputs.file }}
 

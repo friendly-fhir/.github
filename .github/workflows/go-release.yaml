@@ -82,12 +82,12 @@ jobs:
       artifact-name: ${{ inputs.artifact-name }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7.0.0
         with:
           go-version-file: ${{inputs.go-version-file}}
 
@@ -98,7 +98,7 @@ jobs:
 
       - name: Create Release
         if: ${{ !inputs.snapshot }}
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v7.3.0
         with:
           distribution: goreleaser
           version: "~> v1"
@@ -109,7 +109,7 @@ jobs:
 
       - name: Create Snapshot Release
         if: ${{ inputs.snapshot }}
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v7.3.0
         with:
           distribution: goreleaser
           version: "~> v1"
@@ -139,7 +139,7 @@ jobs:
           rm -f ${dist}/{*.txt,config.yaml,artifacts.json,metadata.json}
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.2
         id: release-artifact
         with:
           name: ${{inputs.artifact-name}}
@@ -178,7 +178,7 @@ jobs:
 
     steps:
       - name: Download Release Assets
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8.0.2
         with:
           name: ${{ needs.release.outputs.artifact-name }}
 
@@ -217,18 +217,12 @@ jobs:
           name=$(echo "${name}" | sed "s@-SNAPSHOT@@g")
           echo "subject-name=${name}" >> "${GITHUB_OUTPUT}"
 
-      - name: Attest SBOM provenance
-        if: steps.unarchive.outputs.sbom-path != ''
-        id: sbom
-        uses: actions/attest-sbom/predicate@v1
-        with:
-          sbom-path: ${{ steps.unarchive.outputs.sbom-path}}
-
+      # Produces an SBOM attestation when an SBOM is present, and falls back
+      # to SLSA build provenance otherwise.
       - name: Attest build provenance
         if: steps.unarchive.outputs.subject-path != ''
-        uses: actions/attest@v1
+        uses: actions/attest@v4.2.2
         with:
           subject-path: "${{ steps.unarchive.outputs.subject-path }}"
           subject-name: "${{ steps.unarchive.outputs.subject-name }}"
-          predicate-type: ${{ steps.sbom.outputs.predicate-type }}
-          predicate-path: ${{ steps.sbom.outputs.predicate-path }}
+          sbom-path: ${{ steps.unarchive.outputs.sbom-path }}

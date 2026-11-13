@@ -15,8 +15,8 @@ on:
         type: string
         description: |
           The version to use for the golangci-lint tool.
-          Default: v1.58
-        default: v1.58
+          Default: v2.15.0
+        default: v2.15.0
         required: false
 
 jobs:
@@ -26,10 +26,10 @@ jobs:
 
     steps:
     - name: Check out code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7.0.1
 
     - name: Set up Go
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v7.0.0
       with:
         go-version-file: ${{inputs.go-version-file}}
 
@@ -37,6 +37,6 @@ jobs:
       run: go mod download
 
     - name: golangci-lint
-      uses: golangci/golangci-lint-action@v6
+      uses: golangci/golangci-lint-action@v9.3.0
       with:
         version: ${{inputs.golangci-lint-version}}
